@@ -1,5 +1,9 @@
 # Python基础笔记
 
+[TOC]
+
+
+
 ## Day2
 
 ### 1. 现字符串插值的方式
@@ -482,9 +486,119 @@ print(f"key1:{key1},key2:{key2},key3:{key3}")
 
 ### 4. 函数的多种参数
 
+(1)**位置参数**
+
+调用函数时根据函数定义的参数的位置来传递参数
+
+![image-20260210200400563](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260210200400652.png)
+
+（2）**关键字参数**
+
+函数调用时通过“键=值”形式传递参数
+
+作用: 可以让函数更加清晰、容易使用，同时也清除了参数的顺序需求
+
+```python
+def print_info(name,age,gender):
+    print(f"您的名字是:{name}")
+    print(f"您的年龄是:{age}")
+    print(f"您的性别是:{gender}")
+    
+print_info(age=30,gender='女',name='Alice')
+print_info('bob',gender='男',age=18)
+```
+
+（3）**缺省参数**
+
+缺省参数也叫默认参数，用于定义函数，为参数提供默认值，调用函数时可不传该默认参数的值
+
+作用: 当调用函数时没有传递参数, 就会使用默认是用缺省参数对应的值
+
+```python
+# 缺省参数
+def print_info(name,age,gender='男'):
+    print(f"您的名字是:{name}")
+    print(f"您的年龄是:{age}")
+    print(f"您的性别是:{gender}")
+    
+print_info('Tom',20) # 可以不传缺省参数的值, 使用缺省值
+print_info("秀芹",25,'女') # 也可以传缺省参数的值, 使用传入的值
+```
+
+> 注意事项：
+>
+> - 定义缺省参数的时候，所有的位置参数必须在缺省参数之前
+>
+> - 函数调用时，如果没有为缺省参数传值，那么使用默认值，否则使用传入的值
+
+（4）**不定长参数（多值参数）**
+
+不定长参数：**不定长参数也叫可变参数，即参数的个数是可以变化的。**
+
+Python 中，不定长参数用于处理 “参数数量不确定” 的场景，分为两类：
+
+==*args== ：接收**多个位置参数**，将参数打包为**元组（tuple）**；
+
+==*kwargs== ：接收**多个关键字关键字参数**，将参数打包为**字典（dict）**。
+
+两者的核心区别在于传递方式：
+
+==*args== 处理 “按位置顺序传递的参数”
+
+==*kwargs== 处理 “按 ==键=值== 格式传递的参数”。
+
+```python
+def sum_total(*args):
+    total = 0
+    for i in args:
+        total += i
+	print(total)
+    
+sum_total(1, 2, 3, 4, 5) # 15
+```
+
+```python
+def print_demo(*arg, **kwargs):
+    print(args)
+    print(kwargs)
+    
+print_demo(1, 2, 3, 4, 5, name='Alice', age=20, gender='女')
+# (1, 2, 3, 4, 5) 
+# {'name': 'Alice', 'age': 20, 'gender': '女'}
+```
+
+> `*arg`和 `**kwargs`中的`arg`和`kwargs`都可替换为其他名称，但需保留*和**
+>
+> 一起使用时必须保证==`*arg`在前`**kwargs`在后==
+
+``` python
+def print_demo2(*args, **kwargs):
+    print(args)
+    print(kwargs)
+    
+def print_demo(*args, **kwargs):
+    # 变量名作为实参传的是对应的元组和字典
+    print_demo2(args, kwargs)
+    '''
+    输出结果：
+    ((2，3，4，5),{'name':'Alice','age':20,'gender':'女'})
+    {}
+    '''
+    
+    # 加上*号对元组、字典进行拆包（只有传参时会用这种）
+    print_demo2(*args, **kwargs)
+    '''
+    输出结果：
+    (2，3，4，5)
+    {'name':'Alice','age':20,'gender':'女'}
+    '''
+    
+print_demo(1, 2, 3, 4, 5, name='Alice', age=20, gender='女')
+```
+
 ### 5. 引用
 
-**python****中的引用？**
+**python中的引用？**
 
 **变量** **≠** **对象**：变量只是 “引用的名字”，对象才是真正的数据；
 
@@ -559,6 +673,8 @@ if __name__ == '__main__':
 >
 > - **可变对象：改堆中的对象内容** **→** **外部也变（因为两个引用指向同一块堆空间）**
 
+==引用计数为0时，对应的对象空间就会被释放==
+
 ### 6. copy()
 
 使用copy对可变对象进行赋值，会将原对象的值复制给另一个堆空间，新的可变对象引用指向此空间，从而两个引用指向不同的空间，不会同步改变
@@ -603,3 +719,75 @@ sub_result = cal_num(a,b,lambda a,b:a-b)
 mul_result = cal_num(a,b,lambda a,b:a*b)
 ```
 
+### 8. 面向对象内置方法
+
+初始化: `__init__`
+
+对象描述: `__str__`
+
+对象销毁:` __del__`
+
+```python
+# 小明同学当前体重是100kg。每当他跑步一次时，则会减少0.5kg；每当他大吃大喝一次时，则会增加2kg
+# 1. 定义学生类
+class Student:
+    # 2. 定义初始化方法
+    def __init__(self, name, weight):
+        self.name = name
+        self.weight = weight
+        
+    # 3. 定义打印方法
+    def __str__(self):
+    	return f"{self.name}同学的体重是:{self.weight}"
+    
+    # 4. 定义跑步方法
+    def run(self):
+        self.weight -= 0.5
+        print(f"跑步一次，减重0.5kg, {self.name}当前的体重是:{self.weight}")
+        
+    # 5. 定义大吃大喝方法
+    def eat(self):
+        self.weight += 2
+        print(f"大吃大喝一次，增加2kg, {self.name}当前的体重是:{self.weight}")
+        
+# 6. 创建小明同学这个对象
+stu = Student('小明',100)
+
+# 7. 调用方法
+stu.run()
+stu.run()
+stu.eat()
+```
+
+## Day5
+
+### 1. 使用注解说明参数类型
+
+格式：==def function(形参名:注解)==
+
+注解为形参的数据类型
+
+```python
+class HouseItem:
+    # 家具类
+    '''
+    省略具体内容
+    '''
+    
+class House:
+    # 房子类
+    '''
+    省略具体内容
+    '''
+    # 添加家具方法
+    def add_item(self, item:HouseItem): # 使用':[数据类型]'注解，此处表示item是HouseItem类型
+		print("要添加 %s" % item)
+```
+
+### 2. 访问控制
+
+| 命名方式             | 访问权限   | 说明                                               |
+| -------------------- | ---------- | -------------------------------------------------- |
+| `attr`（普通）       | **公开**   | 可被外部直接访问和修改                             |
+| `_attr`（单下划线）  | **受保护** | 约定为内部使用，外部应避免访问（非强制）           |
+| `__attr`（双下划线） | **私有**   | 被 Python 解释器改名，外部无法直接访问（强制隐藏） |
