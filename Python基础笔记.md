@@ -791,3 +791,258 @@ class House:
 | `attr`（普通）       | **公开**   | 可被外部直接访问和修改                             |
 | `_attr`（单下划线）  | **受保护** | 约定为内部使用，外部应避免访问（非强制）           |
 | `__attr`（双下划线） | **私有**   | 被 Python 解释器改名，外部无法直接访问（强制隐藏） |
+
+### 3. 继承
+
+**继承格式：**
+
+```python
+class 父类名(object):
+	...(省略)
+class 子类名(父类名): # 继承语法
+	...(省略)
+```
+
+**多继承:**
+
+```python
+# 父类1
+class Flyable:
+    def fly(self):
+        print("会飞")
+
+# 父类2
+class Swimmable:
+    def swim(self):
+        print("会游泳")
+
+# 子类继承多个父类
+class Duck(Flyable, Swimmable):
+    pass
+
+# 使用子类
+duck = Duck()
+duck.fly()   # 继承Flyable → 会飞
+duck.swim()  # 继承Swimmable → 会游泳
+```
+
+#### 3.1 菱形问题
+
+![image-20260211202820512](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260211202820652.png)
+
+- 子类D同时继承B和C；
+- B和C又同时继承A；
+- 若A、B、C中有同名方法，那么D用该方法时，到底执行哪个父类的版本？
+
+``` python
+class A:  # 祖父类
+    def say(self):
+        print("A的say方法")
+
+class B(A):  # 父类1，继承A
+    def say(self):
+        print("B的say方法")
+
+class C(A):  # 父类2，继承A
+    def say(self):
+        print("C的say方法")
+
+class D(B, C):  # 子类，继承B和C
+    pass  # 未重写say方法
+
+# 问题：D的对象调用say()，会执行B还是C的方法？
+d = D()
+d.say()  # 输出：B的say方法（为什么？）
+```
+
+**菱形问题的核心：方法的调用顺序（MRO）**
+
+```python
+# 打印D类的方法解析顺序
+print(D.__mro__)
+# 输出：
+# (<class '__main__.D'>, <class '__main__.B'>, <class '__main__.C'>, <class '__main__.A'>, <class 'object'>)
+```
+
+> - 顺序规则：从左到右，深度优先，不重复访问（先查 D，再 B，再 C，再 A，最后 object）；
+>
+> - 因此 `d.say()` 会优先找到 **B** 中的 `say` 方法。
+>
+> - MRO的计算原则（C3算法）
+>
+>     1. 子类优先于父类；
+>     2. 同一层级的父类，按继承时的顺序（如 `class D(B, C)` 中 **B** 优先于 **C**）；
+>     3. 确保祖父类只被访问一次。
+>
+>     
+>
+> - 记住：查看 `类名.__mro__` 即可明确方法搜索顺序，无需死记规则。
+
+#### 3.1 子类调用父类方法
+
+子类重写父类方法后，可通过 ==`super()`== 函数调用父类的原始实现
+
+`super()`是匿名父类
+
+```python
+class Person:
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+class Student(Person):
+    def __init__(self, name, age, school):
+        super().__init__(name, age)  # 调用父类的构造函数
+        self.school = school
+
+    def get_info(self):
+        return f"{self.name}，{self.age}岁，在{self.school}上学"
+
+# 实例化Student类并调用方法
+student = Student("张三", 15, "阳光中学")
+print(student.get_info())
+```
+
+> **补充说明**：在 Python 2.x 时，如果在子类中需要调用父类中的方法，还可以使用：`父类名.方法(self)`
+>
+> - 这种方式，目前在 Python 3.x 还支持这种方式
+> - 这种方法 **不推荐使用**，因为一旦 **父类发生变化**，方法调用位置的 **类名** 同样需要修改
+
+### 4. 空函数/类
+
+使用`pass`表示空函数/类
+
+```python
+# 定义父类
+class Father:
+    def __init__(self):
+        self.gender = 'man'
+
+    def walk(self):
+        print("爱好散步行走")
+
+# 定义子类
+class Son(Father):
+    pass	# 使用pass表示内容为空
+
+# 实例化验证继承
+son = Son()
+print(son.gender)
+son.walk()
+```
+
+### 5. 多态
+
+**多态依赖继承和方法重写，需同时满足：**
+
+1. 存在继承关系：子类继承父类；
+2. 子类重写父类方法：子类对父类的方法进行重新实现；
+3. 父类引用指向子类对象：用父类类型的变量接收子类对象。
+
+```python
+# 1. 父类
+class Animal:
+    def make_sound(self):
+        # 父类方法：定义接口
+        pass
+
+# 2. 子类（继承+重写）
+class Dog(Animal):
+    def make_sound(self):  # 重写父类方法
+        print("汪汪叫")
+
+class Cat(Animal):
+    def make_sound(self):  # 重写父类方法
+        print("喵喵叫")
+
+class Duck(Animal):
+    def make_sound(self):  # 重写父类方法
+        print("嘎嘎叫")
+
+# 3. 统一调用（父类引用指向子类对象）
+def animal_sound(animal: Animal):  # 参数声明为父类类型
+    animal.make_sound()  # 调用同一方法，表现不同
+
+# 测试多态
+dog = Dog()
+cat = Cat()
+duck = Duck()
+
+animal_sound(dog)   # 输出：汪汪叫
+animal_sound(cat)   # 输出：喵喵叫
+animal_sound(duck)  # 输出：嘎嘎叫
+```
+
+> **关键**：`animal_sound` 函数无需区分传入的是 `Dog`、`Cat` 还是 `Duck`，只需调用 `make_sound` 方法，即可得到对应行为。
+
+### 6. 抽象类与抽象方法
+
+ **抽象类==继承 `ABC`==**
+
+> **说明：**
+>
+> - 不能被实例化
+> - 用来作为父类，规定子类的行为
+> - 抽象类中至少有一个抽象方法
+>
+> **作用：**
+>
+> - 约束子类必须实现某些方法
+> - 提前发现设计错误
+> - 统一接口
+
+ **抽象方法==使用 `@abstractmethod`修饰==**
+
+> **说明：**
+>
+> - 只有方法声明（或部分实现）
+> - 子类必须实现父类的全部抽象方法，否则会报错
+> - 否则子类不能实例化
+
+**定义方式：**
+
+```python
+from abc import ABC, abstractmethod
+
+class Animal(ABC): # 抽象类
+
+    @abstractmethod # 修饰抽象方法
+    def speak(self):
+        pass
+```
+
+**特点**
+
+- 抽象类中至少有一个 `@abstractmethod`
+- 抽象类不能创建对象
+
+```python
+Animal()  # 报错
+```
+
+**抽象类 vs 普通类:**
+
+| 项目                 | 抽象类 | 普通类 |
+| --------------- | ------ | ------ |
+| 能否实例化           | ❌      | ✅      |
+| 是否强制子类实现方法 | ✅      | ❌      |
+| 是否用于规范设计     | ✅      | ❌      |
+
+#### 7. 抽象属性（`@property`）
+
+**规定子类必须有某个属性**
+
+```python
+class Person(ABC):
+
+    @property
+    @abstractmethod
+    def name(self):
+        pass
+    
+class Student(Person):
+    @property
+    def name(self):
+        return "Tom"
+```
+
