@@ -1,3 +1,5 @@
+
+
 # Python基础笔记
 
 [TOC]
@@ -786,11 +788,11 @@ class House:
 
 ### 2. 访问控制
 
-| 命名方式             | 访问权限   | 说明                                               |
-| -------------------- | ---------- | -------------------------------------------------- |
-| `attr`（普通）       | **公开**   | 可被外部直接访问和修改                             |
-| `_attr`（单下划线）  | **受保护** | 约定为内部使用，外部应避免访问（非强制）           |
-| `__attr`（双下划线） | **私有**   | 被 Python 解释器改名，外部无法直接访问（强制隐藏） |
+| 命名方式             | 访问权限   | 说明                                                         |
+| -------------------- | ---------- | ------------------------------------------------------------ |
+| `attr`（普通）       | **公开**   | 可被外部直接访问和修改                                       |
+| `_attr`（单下划线）  | **受保护** | 约定为内部使用，外部应避免访问（非强制）                     |
+| `__attr`（双下划线） | **私有**   | 被 Python 解释器改名，外部无法直接访问（强制隐藏）（子类也无法访问） |
 
 ### 3. 继承
 
@@ -876,7 +878,7 @@ print(D.__mro__)
 >
 >     
 >
-> - 记住：查看 `类名.__mro__` 即可明确方法搜索顺序，无需死记规则。
+> - 记住：查看 ==`类名.__mro__`== 即可明确方法搜索顺序，无需死记规则。
 
 #### 3.1 子类调用父类方法
 
@@ -1028,7 +1030,7 @@ Animal()  # 报错
 | 是否强制子类实现方法 | ✅      | ❌      |
 | 是否用于规范设计     | ✅      | ❌      |
 
-#### 7. 抽象属性（`@property`）
+### 7. 抽象属性（`@property`）
 
 **规定子类必须有某个属性**
 
@@ -1046,3 +1048,636 @@ class Student(Person):
         return "Tom"
 ```
 
+## Day6
+
+### 1. 对象属性和类属性
+
+**对象属性：**定义在`__init__`方法中，与具体对象绑定
+
+**类属性：**定义在`__init__`方法外，与类绑定，通过==类名.属性名==访问，对所有对象共享
+
+> 若使用==对象名.属性名==访问类属性，将会给此对象增加一个同名对象属性，而不会访问原类属性
+
+```python
+class Student:
+    # 类属性：定义在 __init__ 外，所有学生共享
+    school = "北京大学"  # 所有学生的学校相同
+
+    def __init__(self, name):
+        self.name = name  # 对象属性
+
+# 所有对象共享类属性
+stu1 = Student("张三")
+stu2 = Student("李四")
+
+print(Student.school)  # 输出：北京大学（推荐：类名访问）
+print(stu1.school)     # 输出：北京大学（对象也能访问，但不推荐修改）
+print(stu2.school)     # 输出：北京大学（和 stu1 共享同一值）
+
+# 修改类属性（所有对象同步变化）
+Student.school = "清华大学"
+print(stu1.school)     # 输出：清华大学（所有对象共享新值）
+```
+
+### 2. 类方法
+
+绑定到**类本身**的方法，用于操作类属性（通过 `@classmethod` 装饰）
+
+- 通过==`类名.方法名()`== 调用
+
+- 第一个参数固定为 `cls`（代表类本身）
+- 可访问/修改类属性，**不能直接访问对象属性**
+
+> `cls`表示类本身
+>
+> `self`表示对象本身
+
+```python
+class Tool:
+    # 类属性：记录工具总数
+    count = 0
+
+    def __init__(self, name):
+        self.name = name  # 对象属性
+        Tool.count += 1   # 每次创建对象，类属性 +1
+
+    # 类方法：操作类属性（统计工具总数）
+    @classmethod
+    def show_total(cls):
+        print(f"当前工具总数：{cls.count} 个")  # 通过 cls 访问类属性
+
+# 调用类方法（推荐用类名）
+Tool.show_total()  # 输出：当前工具总数：0 个
+
+# 创建对象后，类属性变化
+tool1 = Tool("锤子")
+tool2 = Tool("螺丝刀")
+Tool.show_total()  # 输出：当前工具总数：2 个
+```
+
+### 3. 静态方法
+
+定义在类中的**普通函数**，与类属性、对象属性均无直接关联（通过 `@staticmethod` 装饰）
+
+- 无强制参数（可传普通参数，无需 `self` 或 `cls`）
+- **不能直接访问类属性或对象属性**（如需访问，需通过参数传入）
+- 可通过 `类名.方法名()` 调用，也可通过 `对象.方法名()` 调用；
+
+```python
+class MathHelper:
+    # 静态方法：纯功能逻辑（判断是否为偶数）
+    @staticmethod
+    def is_even(num):
+        return num % 2 == 0
+
+    # 静态方法：纯功能逻辑（计算平均值）
+    @staticmethod
+    def average(a, b):
+        return (a + b) / 2
+
+# 调用静态方法（推荐用类名）
+print(MathHelper.is_even(4))   # 输出：True
+print(MathHelper.average(3, 5)) # 输出：4.0
+```
+
+### 4. `__new__`方法
+
+- 使用类名()创建对象时，Python解释器会先调用`__new__`方法为对象分配空间
+- `__new__`是由`object`基类提供的内置静态方法，主要作用有两个：
+    - 在内存中为对象分配空间
+    - 返回对象的引用
+- Python解释器获得对象引用后，将引用作为第一个参数传递给`__init__`方法
+- 通过重写`__new__`可以控制对象的创建过程，确保只生成一个实例
+
+### 5. 单例模式
+
+单例是一种创建型设计模式，让你保证一个类只有一个实例对象，每一次执行`类名()`创建的对象，内存地址是相同的。
+
+```python
+class MusicPlayer(object):
+    instance = None  # 始终指向唯一的音乐播放器对象
+
+    def __new__(cls, *args, **kwargs):
+        if cls.instance is None:
+            cls.instance = super().__new__(cls)
+        return cls.instance
+
+    def __init__(self, music_name):
+        self.music_name = music_name
+
+    def play(self):
+        print(f"正在播放: {self.music_name}")
+
+
+player1 = MusicPlayer('青花瓷')
+player2 = MusicPlayer('如愿')
+player1.play()
+player2.play()
+```
+
+ ### 6. 异常
+
+通过`try-except`结构，可以 “捕获” 异常并处理，避免程序崩溃
+
+``` python
+try:
+    # 可能会引发异常的代码
+    pass
+except (错误类型1, 错误类型2):
+    # 针对上述两种错误类型，执行对应的代码
+    pass
+except 错误类型3 as e:
+    # 针对错误类型3，执行对应的代码，e是异常对象
+    # 可以记录日志...
+    pass
+except Exception as e:
+    # 兜底处理，捕获所有其他异常
+    # 可以记录日志...
+    pass
+else:
+    # 如果没有异常发生，则会执行此处的代码
+    pass
+finally:
+    # 无论有没有异常发生，都一定会执行此处的代码
+    pass
+```
+
+> 即使在`except`或`else`中包含`return`语句，依然会执行`finally`中的代码
+
+**异常传递**
+
+- 当函数/方法执行出现异常时，会**将异常传递给函数/方法的调用一方**。
+- 如果传递到主程序，仍然没有异常处理，程序才会被终止。
+- 在开发中，可以**在主函数中增加异常捕获**。
+- 而在主函数中调用的其他函数，只要出现异常，都会**传递到主函数的异常捕获**中。
+- 这样就不需要在代码中，增加大量的异常捕获，能够保证代码的整洁。
+
+![image-20260212170517729](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260212170517886.png)
+
+> **异常传递的终止条件：**
+>
+> - **被某个层级的 try - except 捕获**：如上述例子中，主程序的 except 捕获异常后，传递终止。
+> - **到达程序顶层仍未被捕获**：此时程序会打印异常信息并崩溃。
+
+### 7. 抛出异常
+
+在开发中，除了 **代码执行出错** Python 解释器会 **抛出** 异常之外， 还可以根据 **应用程序特有的业务需求主动抛出异常**
+
+基本语法：==raise 异常对象==
+
+![image-20260212170754715](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260212170754835.png)
+
+```python
+def get_password():
+    # 假设这个函数从数据库或配置文件中获取密码
+    password = "abc"  # 模拟一个长度不足的密码
+    
+    if len(password) < 8:
+        # 主动抛出异常
+        raise Exception("密码长度不正确")
+    
+    return password
+
+try:
+    pwd = get_password()
+    print(f"获取到的密码是: {pwd}")
+except Exception as e:
+    print(f"发生错误: {e}")
+```
+
+> **注意事项：**
+>
+> 1. 使用 `raise` 关键字可以主动抛出异常。
+> 2. `raise` 关键字后面可以跟一个异常对象，例如 `Exception("错误信息")`。
+> 3. 抛出的异常需要被外部的 `try - except` 语句捕获并处理，否则程序会崩溃。
+
+### 8. 断言（Assertion）异常
+
+**语法：**==`assert 条件表达式, 错误信息`==
+
+**执行逻辑：**
+
+- 如果 `条件表达式` 的结果为 `True`，程序继续执行。
+- 如果 `条件表达式` 的结果为 `False`，程序抛出 `AssertionError` 异常，并显示 `错误信息`。
+
+```python
+def calculate_average(numbers):
+    # 断言：传入的列表不能为空
+    assert len(numbers) > 0, "列表不能为空"
+    
+    total = sum(numbers)
+    average = total / len(numbers)
+    return average
+
+# 正常调用
+scores = [90, 85, 78]
+avg = calculate_average(scores)
+print(f"平均分是: {avg}")  # 输出: 平均分是: 84.333...
+
+# 异常调用
+empty_scores = []
+avg_empty = calculate_average(empty_scores)  # 此处会抛出 AssertionError
+```
+
+### 9. 常见异常类型
+
+| 编号 | 异常类型            | 触发场景                    | 示例                                         |
+| ---- | ------------------- | --------------------------- | -------------------------------------------- |
+| 1    | `TypeError`         | 数据类型错误                | `"2" + 2`（字符串 + 整数）                   |
+| 2    | `ValueError`        | 数据值合法但不符合要求      | `int("abc")`（字符串无法转整数）             |
+| 3    | `IndexError`        | 序列索引越界                | `[1,2][3]`（列表索引 3 不存在）              |
+| 4    | `KeyError`          | 字典键不存在                | `{"name": "张三"}["age"]`                    |
+| 5    | `ZeroDivisionError` | 除以零                      | `1 / 0`                                      |
+| 6    | `AttributeError`    | 访问对象不存在的属性 / 方法 | `Student().score`（Student 类无 score 属性） |
+| 7    | `NameError`         | 变量未定义                  | `print(x)`                                   |
+| 8    | `AssertionError`    | 断言失败                    | `x = 5; assert x > 10`                       |
+| 9    | `FileNotFoundError` | 打开的文件不存在            | `open("data.txt", "r")`                      |
+
+### 10. 模块
+
+通过`import`导入模块，导入方式：
+
+| 导入方式             | 语法示例                            | 说明                                  |
+| -------------------- | ----------------------------------- | ------------------------------------- |
+| 导入整个模块         | `import 模块名`                     | 使用时需加模块名前缀（`模块名.功能`） |
+| 导入模块并取别名     | `import 模块名 as 别名`             | 简化模块名（`别名.功能`）             |
+| 导入模块中的特定功能 | `from 模块名 import 功能1, 功能2`   | 直接使用功能名（无需前缀）            |
+| 导入特定功能并取别名 | `from 模块名 import 功能名 as 别名` | 直接使用别名                          |
+| 导入模块中的所有功能 | `from 模块名 import *`              | 不推荐（可能导致命名冲突）            |
+
+> 将模块`mod1.py`导入模块`mod2.py`中，执行`mod2.py`时会自动先执行`mod1.py`
+>
+> `if __name__ == "__main__":`下的内容不会被执行
+
+**模块搜索路径**
+
+当导入模块时，Python解释器会按照以下顺序查找模块文件：
+
+1. 当前执行脚本所在的目录。
+2. 系统环境变量PYTHONPATH指定的目录。
+3. Python安装目录的标准库路径（如site-packages）。
+
+可以通过`sys.path`查看模块的搜索路径
+
+```python
+import sys
+print(sys.path) # 输出模块搜索路径列表
+```
+
+### 11. 模块的name属性
+
+每个模块都有一个内置属性`__name__`，用于标识模块的名字
+
+- 当模块被导入时，`__name__`属性的值为模块的名字
+- 当模块被直接执行时，`__name__`属性的值为`__main__`
+
+于是模块被导入后，运行导入的模块无法执行`if __name__ == "__main__":`下的代码
+
+> `if __name__ == "__main__":`下的变量在本模块中是全局变量
+>
+> `if __name__ == "__main__":`中的内容无法被其他模块使用
+
+### 12. 包
+
+包是一个包含了`__init__.py`文件的文件夹
+
+包下可包含：
+
+- `__init__.py` 文件
+- 模块文件
+- 子包
+
+**导入模块的三种方式：**
+
+1. `import 包名.模块名`
+2. `from 包名 import 指定模块`
+3. `from 包名 import *`
+
+**快速入门案例：**
+1. 新建包 `my_package`
+2. 在包内新建模块 `my_module1` 和 `my_module2`
+3. 在两个模块内各定义一个函数 `say_hello()`
+4. 导入并调用
+
+**文件准备：**
+
+*   **my_module1.py**
+    ```python
+    def say_hello():
+        print('我是my_module1的hello')
+    ```
+
+*   **my_module2.py**
+    ```python
+    def say_hello():
+        print('我是my_module2的hello')
+    ```
+
+#### **导包并使用的方式：**
+
+**方式一：`import 包名.模块名`**
+
+```python
+# 导入 wangdao 包下的 my_module1 模块
+import wangdao.my_module1
+
+# 使用模块内的方法
+wangdao.my_module1.say_hello()
+```
+
+**方式二：`from 包名 import 模块名`**
+
+```python
+# 导入 wangdao 包下的 my_module1 模块
+from wangdao import my_module1
+
+# 使用模块内的方法
+my_module1.say_hello()
+```
+
+**方式三：`from 包名 import *`**
+
+导入包内 `__init__.py` 文件中 `__all__` 列表里的所有模块。
+
+> 注意：需要在 `__init__.py` 文件中定义 `__all__` 属性。
+
+`__init__.py`文件：
+
+```python
+# 指定以下模块可以导入
+from . import my_module1 
+from . import my_module2
+```
+
+> '`.`'代表**当前目录**（即当前模块所在的目录）
+>
+> '`..`'代表上一级目录
+
+```python
+# 导入 wangdao 包下 __all__ 列表里的所有模块
+from wangdao import *
+
+# 使用模块内的方法
+my_module1.say_hello()
+my_module2.say_hello()
+```
+
+### 13. pip
+
+安装最新版本的包
+
+```cmd
+pip3 install 包名
+```
+
+安装指定版本的包
+
+```cmd
+pip3 install 包名==版本号
+```
+
+卸载已安装的包
+
+```cmd
+pip3 uninstall 包名
+```
+
+将已安装的包升级到最新版本
+
+```cmd
+pip3 install --upgrade 包名 # 或 -U 简写
+```
+
+查看已安装的包列表
+
+```cmd
+pip3 list
+```
+
+查看某个包的详细信息
+
+```cmd
+pip3 show 包名
+```
+
+临时更换安装源安装
+
+```cmd
+pip3 install 包名 -i 镜像源地址
+```
+
+> 常用国内镜像源：
+>
+> 豆瓣：https://pypi.doubanio.com/simple/
+>
+> 阿里云：https://mirrors.aliyun.com/pypi/simple/
+>
+> 清华大学：https://pypi.tuna.tsinghua.edu.cn/simple/
+
+永久设置安装源
+
+```cmd
+pip config set global.index-url 镜像源地址
+```
+
+### 14. 文件
+
+#### 14.1 打开文件 `open()`
+
+打开文件并返回文件句柄，使用==`文件句柄.文件方法`==格式对文件进行操作
+
+基本语法：==`文件句柄 = open(文件路径, 打开模式, encoding=编码格式)`==
+
+> 使用==`文件句柄.close()`==关闭文件
+
+**打开模式**
+
+| 模式 | 类型     | 核心功能                                     | 注意事项                             |
+| :--- | :------- | :------------------------------------------- | :----------------------------------- |
+| `r`  | 文本读   | **只读**（默认模式），文件不存在则报错       | 不能写操作                           |
+| `w`  | 文本写   | **覆盖写**，文件不存在则创建，存在则清空内容 | 会覆盖原有内容，谨慎使用             |
+| `a`  | 文本追   | **追加写**，文件不存在则创建，内容加在末尾   | 不会覆盖原有内容，适合写日志         |
+| `r+` | 文本读写 | 可读可写，文件**不存在则报错**               | 写操作从文件开头**覆盖**             |
+| `w+` | 文本读写 | 可读可写，文件**不存在则创建**，存在则清空   | 先**清空**再读写，慎用               |
+| `a+` | 文本读写 | 可读可写，文件**不存在则创建，写在末尾**     | 读操作需先移动指针（后续讲`seek()`） |
+| `rb` | 二进制读 | 以二进制格式读（如图片、视频）               | 不指定`encoding`，避免乱码           |
+| `wb` | 二进制写 | 以二进制格式写（如保存图片）                 | 常用于文件传输、保存非文本数据       |
+| `ab` | 二进制追 | 以二进制格式追加写                           | 如给视频文件追加内容                 |
+
+#### 14.2 文件读方法
+
+- **`read(size)`：读指定长度 / 全部内容**
+    - `size`（可选）：指定读取字符数，默认读取全部
+- **`readline()`：逐行读取（适合大文件）**
+    - 每次调用读“一行内容”，包括换行符`\n`
+    - 读到文件末尾返回空字符串""，可用于**循环读数**
+- **`readlines()`：读取所有行，返回列表**
+    - 把文件每一行作为列表的一个元素，适合处理 “需要按行操作” 的场景
+
+#### 14.3 文件写方法
+
+- **`write(content)`：写入字符串/二进制数据**
+    - 文本模式：`content`必须是字符串
+    - 二进制模式：`content`必须是字节串（如：`b"hello`）
+- **`writelines(line)`：写入列表（元素为字符串）**
+    - 用于批量写入多行内容，列表中每个元素是一行字符串（需手动加`\n`）
+
+### 15. 安全操作`with`
+
+with语句能自动关闭文件（退出with块时触发），无需手动调用`close()`
+
+**语法格式：**
+
+```python
+with open(文件路径, 模式, encoding=编码) as 文件句柄：
+    # 缩进内执行读写操作
+    读/写代码
+    # 退出缩进后，文件自动关闭，无需手动调用 `close()`
+```
+
+案例：
+
+```python
+# 读文件：with自动关闭
+with open("test.txt", "r", encoding="utf-8") as f:
+    content = f.read()
+    print(content)  # 缩进内操作文件
+
+# 写文件：with自动关闭
+with open("with_write.txt", "w", encoding="utf-8") as f:
+    f.write("用with写的内容，无需手动close() \n")
+    f.write("自动关闭更安全！")
+
+# 验证：文件已关闭
+print(f.read())  # 报错: ValueError: I/O operation on closed file.
+```
+
+### 16. 文件/目录操作
+
+需要导入`os`模块，使用==`import os`==
+
+**文件操作**
+
+| 序号 | 方法名   | 说明                     | 示例                              |
+| ---- | -------- | ------------------------ | --------------------------------- |
+| 01   | `rename` | 重命名文件               | `os.rename(源文件名, 目标文件名)` |
+| 02   | `remove` | 删除文件, 不能删除文件夹 | `os.remove(文件名)`               |
+
+**提示**: 文件或者目录操作都支持 **相对路径** 和 **绝对路径**
+
+
+
+**目录操作**
+
+| 序号 | 方法名       | 说明                           | 示例                      |
+| ---- | ------------ | ------------------------------ | ------------------------- |
+| 01   | `listdir`    | 列出指定目录下的所有文件       | `os.listdir(目录名)`      |
+| 02   | `mkdir`      | 创建目录文件                   | `os.mkdir(目录名)`        |
+| 03   | `rmdir`      | 删除目录文件, 注意只能删除空的 | `os.rmdir(目录名)`        |
+| 04   | `getcwd`     | 获取当前目录                   | `os.getcwd()`             |
+| 05   | `chdir`      | 修改工作目录                   | `os.chdir(目标目录)`      |
+| 06   | `path.isdir` | 判断是否是文件夹               | `os.path.isdir(文件路径)` |
+
+### 17. 给Python传参
+
+- **方式一：PyCharm设置**
+
+    ![image-20260213003315110](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260213003315221.png)
+
+    ![image-20260213003251304](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260213003251429.png)
+
+    > 参数之间用空格隔开
+
+- **方式二：命令行**
+
+    在命令行中输入命令传参并执行：
+
+    ``` 
+    python .\17-给python传参.py ip port
+    ```
+
+    - **`.\17-给python传参.py`**：要执行的 Python 脚本文件（`.\` 表示当前目录）
+    - **`ip` 和 `port`**：传递给脚本的两个命令行参数
+
+    使用 `sys.argv` 打印传递的所有参数，`sys.argv`是一个列表
+
+    ``` python
+    import sys
+    
+    print(sys.argv)  # 打印所有命令行参数
+    ```
+
+    打印结果：
+
+    ```python
+    ['.\17-给python传参.py', 'ip', 'port']
+    ```
+
+    > - `sys.argv[0]` = `'.\17-给python传参.py'`（脚本名称）
+    > - `sys.argv[1]` = `'ip'`（第一个参数）
+    > - `sys.argv[2]` = `'port'`（第二个参数）
+
+### 18. `eavl()`
+
+作用：**将字符串作为代码来执行**（一般用于读配置文件（字典形式））
+
+- 将字典放在文件中，读取出来后直接作为参数传给`eval()`，将会直接变为字典变量
+- 语句：`eval("1+1")`执行结果为2
+
+### 19. `is`与`==`的区别
+
+`is`用于判断两个变量**引用的对象是否为同一个**（内存地址是否一致）`
+
+> `is not`同理
+
+`==`用于判断引用变量的**值是否相等**
+
+### 20. 浅cpoy与深copy
+
+图解：
+
+<img src="https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260213011114515.png" alt="image-20260213011114370" style="zoom:67%;" />
+
+<img src="https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260213011124669.png" alt="image-20260213011124512" style="zoom:75%;" />
+
+```python
+def use_copy():
+    a = [1, 2]
+    b = [10, 20]
+    c = [a, b]
+    d = c.copy() # 浅拷贝
+    a[0] = 5 # 修改a时c,d都会变
+    
+    print(id(c[0]))
+    print(id(d[0]))# c[0]和d[0]的id相同
+
+def use_deepcopy():
+    a = [1, 2]
+    b = [10, 20]
+    c = [a, b]
+    d = c.deepcopy() # 深拷贝
+    a[0] = 5 # 修改a时c会变，a不会变
+    
+    print(id(c[0]))
+    print(id(d[0]))# c[0]和d[0]的id相同
+```
+
+浅拷贝：
+
+<img src="https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260213011954846.png" alt="浅copy" style="zoom:150%;" />
+
+深拷贝：
+
+<img src="https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260213011957055.png" alt="深copy" style="zoom:150%;" />
+
+> 列表和字典中自带的`copy()`都是浅拷贝
+>
+> 深拷贝是 “彻底的拷贝”，原数据和拷贝数据完全独立，无任何关联。
+
+> `import copy`
+>
+> 浅拷贝对不可变类型和可变类型的copy不同。
+>
+> - `copy.copy()`对于可变类型，会进行浅拷贝
+>
+> - `copy.copy()`对于不可变类型，不会拷贝数据，仅仅是拷贝引用并指向对象
