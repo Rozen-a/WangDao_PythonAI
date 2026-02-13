@@ -6,7 +6,7 @@
 
 
 
-## Day2
+## <span style='color:red'>Day2</span>
 
 ### 1. 现字符串插值的方式
 
@@ -79,7 +79,7 @@ else:
 > 2. 循环正常退出，是指以非break的方式跳出
 > 3. 大白话：只要循环不是以break形式跳出，那么就一定会执行else中的内容
 
-## Day3
+## <span style='color:red'>Day3</span>
 
 ### 1. 切片：左闭右开
 
@@ -389,7 +389,7 @@ print(word_dict)
 | 字典推导式 | `{key_expr: value_expr for item in iterable if condition}` | 创建一个新的字典。             |
 | 集合推导式 | `{expr for item in iterable if condition}`                 | 创建一个新的集合（自动去重）。 |
 
-## Day4
+## <span style='color:red'>Day4</span>
 
 ### 1. 全局变量
 
@@ -761,7 +761,7 @@ stu.run()
 stu.eat()
 ```
 
-## Day5
+## <span style='color:red'>Day5</span>
 
 ### 1. 使用注解说明参数类型
 
@@ -1048,7 +1048,7 @@ class Student(Person):
         return "Tom"
 ```
 
-## Day6
+## <span style='color:red'>Day6</span>
 
 ### 1. 对象属性和类属性
 
@@ -1682,7 +1682,7 @@ def use_deepcopy():
 >
 > - `copy.copy()`对于不可变类型，不会拷贝数据，仅仅是拷贝引用并指向对象
 
-## Day7
+## <span style="color:red">Day7</span>
 
 ### 1. 正则表达式
 
@@ -1877,60 +1877,96 @@ print("分割结果:", result)  # 输出：分割结果: ['apple', 'banana', 'or
 
 ### 3.  re.compile (pattern, flags=0)：预编译正则
 
-*课件*
+将正则规则预编译为 Pattern 对象，后续多次使用时提升效率（避免重复解析规则）
+
+**适用场景**：同一正则规则需要匹配多次（如循环处理大量文本）
+
+**示例：**预编译手机号正则，在多个文本中搜索
+
+```python
+import re
+
+# 预编译正则规则（只编译一次）
+pattern = re.compile(r"1[34578]\d{9}")
+
+# 多次使用预编译的 Pattern 对象
+texts = ["文本1: 13812345678", "文本2: 13987654321", "文本3: abc123"]
+for text in texts:
+    result = pattern.search(text)  # 直接用 Pattern 对象调用 search
+    if result:
+        print(f"{text}: 提取到手机号: {result.group()}")
+```
+
+
 
 ### 4. flags 参数：匹配模式控制
 
-*课件*
+常用`flags`参数值（直接使用简称即可）：
+
+- `re.IGNORECASE`（简称 `re.I`）：忽略大小写匹配
+- `re.DOTALL`（简称 `re.S`）：让 `.` 匹配换行符 `\n`（默认 `.` 不匹配 `\n`）
+- `re.MULTILINE`（简称 `re.M`）：让 `^` 和 `$` 匹配 **每行的开头和结尾**（默认只匹配整个字符串的开头结尾）
+
+**示例：**忽略大小写匹配hello
+
+```python
+import re
+
+pattern = r"hello"
+text = "Hello HELLO hello"
+
+# 不忽略大小写：只匹配小写 hello
+print(re.findall(pattern, text))     # 输出: ['hello']
+
+# 忽略大小写：匹配所有大小写形式
+print(re.findall(pattern, text, re.I))   # 输出: ['Hello', 'HELLO', 'hello']
+```
 
 ### 5. 如何查找第二个
 
-*课件*
+`search` 只能查找第一个匹配项。如果要查找第二个，可以使用 `finditer` 配合 `next` 实现：
 
-> `next()`先返回当前所指元素，zai
+- `finditer` 返回一个迭代器，包含所有匹配项
+- `next()` 用于逐个获取匹配项
 
-### 6. 生成器函数
+```python
+import re
 
-![img](https://deepseek-api-files.obs.cn-east-3.myhuaweicloud.com/raw/93da/2026/2/13/file-ada12abb-055b-4bd0-bfdc-5eefff05ab0f?response-content-disposition=attachment%3B%20filename%3D%22image.png%22&Expires=1771052015&AccessKeyId=OD83TSXECLFQNNSZ3IF6&Signature=KYoDFsUkcykU7yuBq/cyymNzWvI%3D)
+def find_second_match(pattern, text):
+    matches = re.finditer(pattern, text)
+    try:
+        next(matches)          # 跳过第一个匹配项
+        second_match = next(matches)  # 获取第二个匹配项
+        return second_match.group()
+    except StopIteration:
+        return None
 
-这是一个**生成器函数**的实现，模仿了 Python 内置 `range()` 的基本功能。我来详细解释：
+text = "abc123def456ghi789"
+pattern = r"\d+"
 
-#### 代码功能
-创建一个从0开始到n-1的数字生成器，每次产生一个数字。
+second = find_second_match(pattern, text)
+print("第二个匹配的数字:", second)  # 输出：第二个匹配的数字: 456
+```
 
-#### 逐行解释
+> `next()`先返回当前所指元素值，再指向下一元素
+
+### 6. 生成器函数（与迭代器类似）
+
+实现一个**生成器函数**，模仿 Python 内置 `range()` 的基本功能：
 
 ```python
 def my_range(n):
-```
-定义生成器函数 `my_range`，参数 `n` 指定生成数字的个数（从0到n-1）
-
-```python
     i = 0
     while i < n:
-```
-初始化计数器为0，循环直到达到n
-
-```python
-    yield i  # 冻结当前执行位置，并返回i
-```
-**关键点：**
-- `yield` 是生成器的核心关键字
-- 当执行到 yield 时，函数会**暂停**，返回当前值
-- 下次调用时会从**暂停的位置**继续执行
-- 这就是注释说的“冻结当前执行位置”
-
-```python
-    i += 1
-```
-计数器增加，为下一次生成做准备
-
-```python
+        yield i  # 冻结当前执行位置，并返回i
+        i += 1
     return None
 ```
-当循环结束时，生成器自动抛出 `StopIteration` 异常，`return None` 可省略
 
-#### 使用示例
+> - 当执行到 yield 时，函数会**暂停**，返回当前值
+> - 下次调用时会从**暂停的位置**继续执行
+
+**使用示例：**
 
 ```python
 # 创建生成器对象
@@ -1947,8 +1983,6 @@ for num in my_range(5):
     print(num)  # 输出 0,1,2,3,4
 ```
 
-#### 执行过程详解
-
 当调用 `my_range(3)` 时：
 
 1. **第一次**调用：执行到 `yield 0`，返回0，函数暂停
@@ -1956,29 +1990,191 @@ for num in my_range(5):
 3. **第三次**调用：从 `i += 1` 继续，`i=2`，循环，`yield 2`，返回2，暂停
 4. **第四次**调用：从 `i += 1` 继续，`i=3`，循环条件 `i < 3` 不成立，退出循环，返回None，抛出StopIteration
 
-#### 与普通函数的区别
+### 7. `iter()`函数
 
-**普通函数：**
+将**可迭代对象**传给`iter`函数进行处理，返回一个**迭代器**
+
 ```python
-def normal_range(n):
-    result = []
-    i = 0
-    while i < n:
-        result.append(i)
-        i += 1
-    return result  # 一次性返回所有值
+from collections.abc import Iterable, Iterator
+
+def use_for():
+    my_list = [1, 2, 3]  # 可迭代对象
+    print(isinstance(my_list, Iterable))  # 判断是否是可迭代对象->是
+    print(isinstance(my_list, Iterator))  # 判断是否是迭代器->否
+    for i in my_list:  # 第一次遍历打印成功
+        print(i)
+    for i in my_list:  # 第二次遍历打印成功
+        print(i)
+
+# 调用函数
+use_for()
 ```
 
-**生成器函数：**
+> - 列表是**可迭代对象**，不是迭代器
+>     - 对于可迭代对象使用`for`遍历，会自动先将可迭代对象变为迭代器然后进行遍历
+> - **可迭代对象**可以遍历多次
+> - **迭代器**只能遍历一次
+
 ```python
-def my_range(n):
-    i = 0
-    while i < n:
-        yield i  # 每次返回一个值，节省内存
-        i += 1
+from collections.abc import Iterable, Iterator
+
+def use_for():
+    my_list = [1, 2, 3]  # 可迭代对象
+    print(isinstance(my_list, Iterable))  # 判断是否是可迭代对象->是
+    list_iterator = iter(my_list)  # 将列表转为迭代器
+    print(isinstance(my_list, Iterator))  # 判断是否是迭代器->是
+    for i in my_list:  # 第一次遍历打印成功
+        print(i)
+    for i in my_list:  # 第二次遍历无打印内容（迭代器只能遍历一次）
+        print(i)
+
+# 调用函数
+use_for()
 ```
 
-#### 优点
-- **节省内存**：不需要一次性存储所有数字
-- **惰性求值**：需要时才生成，处理大数据时效率高
-- **可迭代**：可以直接用于for循环
+### 8. 贪婪与非贪婪
+
+- **贪婪匹配**：默认行为，量词（`* + {n,}`）会**“尽可能多”**地匹配字符
+- **非贪婪匹配**：在量词后加？（如 `*? +? {n,}?`），会**“尽可能少”**地匹配字符
+
+| 贪婪量词 | 非贪婪量词 | 含义       | 示例文本 | 贪婪匹配结果 | 非贪婪匹配结果 |
+| :------- | :--------- | :--------- | :------- | :----------- | :------------- |
+| *        | *?         | 0 次或多次 | aabab    | aabab        | aab            |
+| +        | +?         | 1 次或多次 | aabab    | aabab        | aa             |
+| {n,}     | {n,}?      | 至少 n 次  | aaaabbb  | aaaabbb      | aaa            |
+
+**示例：从HTML标签中匹配内容的内容**
+
+```python
+import re
+
+text = "<div>内容1</div><div>内容2</div>"
+
+# 1. 贪婪匹配（.*尽可能多匹配，从第一个<div>到最后一个</div>）
+greedy_pattern = r"<div>.*</div>"  # 注意：这里原文有笔误，应该是.*，不是.*?
+print("贪婪匹配:", re.findall(greedy_pattern, text))
+# 输出：贪婪匹配: ['<div>内容1</div><div>内容2</div>']（匹配整个字符串）
+
+# 2. 非贪婪匹配（.*?尽可能少匹配，从第一个<div>到最近的</div>）
+non_greedy_pattern = r"<div>.*?</div>"
+print("非贪婪匹配:", re.findall(non_greedy_pattern, text))
+# 输出：非贪婪匹配: ['<div>内容1</div>', '<div>内容2</div>']（匹配两个独立标签）
+
+non_greedy_pattern = r"<div>(.*?)</div>"
+print("非贪婪匹配:", re.findall(non_greedy_pattern, text))
+# 输出：非贪婪匹配: ['内容1', '内容2']（匹配两个独立标签内的内容）
+```
+
+### 9. `r'字符串'`
+
+这里的`r`表示原生字符串，正常打印字符串时对于例如 '\\' 的字符我们需要进行转义，但使用 `r'字符串'`则不需要进行转义
+
+### 10. 新建文件自动加注释
+
+![image-20260214010804585](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260214010804899.png)
+
+```python
+# 作者：
+# ${YEAR}年${MONTH}月${DAY}日${HOUR}时${MINUTE}分
+# ...
+```
+
+### 11. 面向对象思想写二叉树
+
+```python
+from collections import deque
+
+
+class TreeNode:
+    def __init__(self, value):
+        self.value = value
+        self.left = None
+        self.right = None
+
+
+class Tree:
+    def __init__(self):
+        self.root = None
+        self.queue = []  # 辅助队列
+
+    def insert_node(self, value):
+        """
+        插入一个新结点
+        :param value:插入的值
+        :return:
+        """
+        new_node = TreeNode(value)
+        self.queue.append(new_node)  # 入队
+        if self.root is None:
+            self.root = new_node  # 树为空，就作为树根
+        else:
+            if self.queue[0].left is None:
+                self.queue[0].left = new_node  # 新结点作为左孩子
+            else:
+                self.queue[0].right = new_node  # 新结点作为右孩子
+                self.queue.pop(0)  # 出队
+
+    def pre_order(self, current_node: TreeNode):
+        """
+        前序遍历，深度优先遍历
+        :param current_node:
+        :return:
+        """
+        if current_node:
+            print(current_node.value, end=' ')
+            self.pre_order(current_node.left)
+            self.pre_order(current_node.right)
+
+    def mid_order(self, current_node: TreeNode):
+        if current_node:
+            self.mid_order(current_node.left)
+            print(current_node.value, end=' ')
+            self.mid_order(current_node.right)
+
+    def last_order(self, current_node: TreeNode):
+        if current_node:
+            self.last_order(current_node.left)
+            self.last_order(current_node.right)
+            print(current_node.value, end=' ')
+
+    def level_order(self):
+        queue = deque()  # 双端队列，使用双向链表来实现的
+        queue.append(self.root)
+        while queue:
+            node:TreeNode=queue.popleft()
+            print(node.value,end=' ')
+            if node.left:
+                queue.append(node.left)
+            if node.right:
+                queue.append(node.right)
+
+
+if __name__ == '__main__':
+    tree = Tree()
+    for i in range(1, 11):
+        tree.insert_node(i)
+    tree.pre_order(tree.root)
+    print('\n-----------------------------')
+    tree.mid_order(tree.root)
+    print('\n-----------------------------')
+    tree.last_order(tree.root)
+    print('\n-----------------------------')
+    tree.level_order()
+```
+
+### 12. 容器：双端队列`deque`
+
+| 操作             | 方法                             | 描述                                                         |
+| :--------------- | :------------------------------- | :----------------------------------------------------------- |
+| **创建**         | `dq = deque(iterable, maxlen=N)` | 创建一个双端队列，`iterable`是初始元素，`maxlen`是可选的最大长度。 |
+| **右侧添加**     | `dq.append(x)`                   | 在右端（尾部）添加一个元素`x`。                              |
+| **左侧添加**     | `dq.appendleft(x)`               | 在左端（头部）添加一个元素`x`。                              |
+| **右侧移除**     | `dq.pop()`                       | 移除并返回右端的元素。                                       |
+| **左侧移除**     | `dq.popleft()`                   | 移除并返回左端的元素。                                       |
+| **右侧批量添加** | `dq.extend(iterable)`            | 在右端一次性添加多个元素。                                   |
+| **左侧批量添加** | `dq.extendleft(iterable)`        | 在左端一次性添加多个元素。                                   |
+| **旋转**         | `dq.rotate(n)`                   | 将队列向右旋转`n`步（`n`为负数则向左旋）。                   |
+| **清空**         | `dq.clear()`                     | 删除所有元素。                                               |
+| **获取长度**     | `len(dq)`                        | 返回队列中的元素个数。                                       |
+
+> `extendleft()`方法在左侧批量添加元素时，最终结果会是原迭代器顺序的**反转**，因为它是一个一个从左侧添加的。
