@@ -225,6 +225,8 @@ def join(seq)
 
 ### 5. 字典
 
+**基本语法：`字典名 = {键1:值1, 键2: 值2, 键3: 值3, ...}`**
+
 **键**key是索引，必须是**不可变类型**，往往是字符串
 
 **值**可以取任何数据类型，但**键**只能使用**字符串**、数字或元组
@@ -245,6 +247,8 @@ def join(seq)
 | 12   | `dict.popitem()`                | 删除并返回字典中的一个键值对（在 Python 3.7+ 中为后进先出）  |
 
 > default 默认为 None
+
+![image-20260215001548495](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215001548727.png)
 
 **字典的特征：**
 
@@ -587,7 +591,7 @@ def print_demo(*args, **kwargs):
     {}
     '''
     
-    # 加上*号对元组、字典进行拆包（只有传参时会用这种）
+    # 加上*号对元组、字典进行拆包，**将字典的键值对作为关键字参数传入（只有传参时会用这种）
     print_demo2(*args, **kwargs)
     '''
     输出结果：
@@ -1588,6 +1592,8 @@ print(f.read())  # 报错: ValueError: I/O operation on closed file.
 
     > 参数之间用空格隔开
 
+    ****
+
 - **方式二：命令行**
 
     在命令行中输入命令传参并执行：
@@ -1744,8 +1750,6 @@ result.group()
 
 ****
 
-**re模块基础函数：**
-
 #### 2.1 match
 
 语法格式：==`re.match(pattern, text, flags=0)`==
@@ -1777,6 +1781,8 @@ print(re.match(pattern, text1))  # 输出：<re.Match object; ...>（成功）
 print(re.match(pattern, text2))  # 输出：None（失败）
 ```
 
+****
+
 #### 2.2 search
 
 语法格式：==`re.search(pattern, text, flags=0)`==
@@ -1801,6 +1807,8 @@ if result:
 > - `group()` - 获取匹配到的完整字符串
 > - `span()` - 返回匹配的起止索引位置（元组形式）
 
+****
+
 #### 2.3 findall
 
 语法格式：==`re.findall(pattern, text, flags=0)`==
@@ -1819,6 +1827,8 @@ pattern = r"1[34578]\d{9}"
 phones = re.findall(pattern, text)
 print("所有手机号:", phones)  # 输出：所有手机号: ['13812345678', '13987654321']
 ```
+
+****
 
 #### 2.4 sub
 
@@ -1853,6 +1863,8 @@ pattern = r"(\d{3})(\d{4})(\d{4})"  # 分3个分组（前3/中4/后4位）
 new_text = re.sub(pattern, r"\1 \2 \3", text)  # \1代表第1个分组
 print(new_text)  # 输出：138 1234 5678
 ```
+
+****
 
 #### 2.5 split
 
@@ -2178,3 +2190,527 @@ if __name__ == '__main__':
 | **获取长度**     | `len(dq)`                        | 返回队列中的元素个数。                                       |
 
 > `extendleft()`方法在左侧批量添加元素时，最终结果会是原迭代器顺序的**反转**，因为它是一个一个从左侧添加的。
+
+### 13. 排序函数`sorted()`
+
+对**可迭代对象**（列表、元组、字典等）进行排序，返回一个新的排序后的**列表**，**不改变原对象**。
+
+> 列表内置的`sort()`方法会改变原对象
+
+**基本语法：**
+
+`sorted(iterable, key=None, reverse=False)`
+
+- **`iterable`**: 需要排序的**可迭代对象**（必传，如列表、元组、字符串等）
+- **`key`**: 排序的“依据”，接受一个**函数**作为参数，用于指定“按元素的什么特征排序”（可选，默认按元素本身大小排序，字典默认按照key排序）
+- **`reverse`**: 排序方向（可选，False 为升序，True 为降序，默认 False）
+
+**key示例：按照元素的长度排序**
+
+```python
+words = ["apple", "banana", "cat", "dog"]
+# for i in words  i传给len
+# 比较 len(i) > len(i1)
+# key=len: 按字符串长度排序
+sorted_words = sorted(words, key=len)
+print(sorted_words)    # ['cat', 'dog', 'apple', 'banana']
+# 'banana' (长度2→2→5→6)
+```
+
+**key示例：按照字典的某个键的值排序**
+
+```python
+students = [
+    {"name": "Alice", "age": 18},
+    {"name": "Bob", "age": 16},
+    {"name": "Charlie", "age": 20}
+]
+
+# key=lambda x: x["age"]: 按"age"字段排序
+sorted_students = sorted(students, key=lambda x: x["age"])  # 使用匿名函数
+print(sorted_students)
+
+# 输出:[{'name': 'Bob', 'age': 16}, {'name': 'Alice', 'age': 18}, {'name': 'Charlie', 'age': 20}]
+```
+
+****
+
+#### 多条件排序
+
+当需要按“多个条件”排序时，可让 `key` 返回**元组**（按元组元素顺序依次作为排序依据）。
+
+> 元组的排序规则：先按第一个元素排，第一个元素相等再比较第二个元素，以此类推
+
+**示例：对元组列表进行排序，按照第一个值的升序，第一个值相同则按照第二个值的降序**
+
+```python
+tup = [(3, 5), (1, 2), (2, 4), (3, 1), (1, 3)]
+
+sorted_tup = sorted(tup, key=lambda x: (x[0], -x[1]))  # 排序规则不影响原数据
+print(sorted_tup)
+# 输出: [(1, 3), (1, 2), (2, 4), (3, 5), (3, 1)]
+```
+
+**示例：先按年龄进行排序，年龄相同则按照姓名长度进行排序**
+
+```python
+students = [
+    {"name": "Bob", "age": 18},
+    {"name": "Alice", "age": 18},
+    {"name": "Charlie", "age": 20}
+]
+
+# key返回元组(age, len(name))：先按age升序，再按name长度升序
+sorted_students = sorted(students, key=lambda x: (x["age"], len(x["name"])))
+print(sorted_students)
+
+# 输出:
+[{'name': 'Bob', 'age': 18}, {'name': 'Alice', 'age': 18}, {'name': 'Charlie', 'age': 20}]
+```
+
+### 14. 内置方法`__repr__`
+
+与`__str__`类似，但更强大的打印函数
+
+```python
+class Student:
+    def __init__(self, name, age, score):
+        self.name = name
+        self.age = age
+        self.score = score
+
+    def __repr__(self):
+        """
+        与str功能一致，但是更牛的打印函数
+        :return:
+        """
+        return f"Student(name={self.name}, age={self.age}, score={self.score})"
+
+
+def sorted_object():
+    students = [
+        {"name": "Bob", "age": 18, 'score': 66},
+        {"name": "Alice", "age": 18, 'score': 62},
+        {"name": "Charlie", "age": 20, 'score': 77}
+    ]
+
+    # 转换,列表中放对象
+    students = [Student(**stu) for stu in students]  # 字典解包操作，将字典的键值对作为关键字参数传入
+
+    print(students)  # 将对象放在列表中仍可以正常打印
+
+
+if __name__ == '__main__':
+    sorted_object()
+```
+
+打印结果：
+
+```cmd
+[Student(name=Bob, age=18, score=66), Student(name=Alice, age=18, score=62), Student(name=Charlie, age=20, score=77)]
+```
+
+将`__repr__`换成`__str__`，打印结果：
+
+```cmd
+[<__main__.Student object at 0x0000015D0C05ED20>, <__main__.Student object at 0x0000015D0C05ED50>, <__main__.Student object at 0x0000015D0C05EF30>]
+```
+
+## <span style='color:red'>Day8</span>
+
+### 1. Jupyter Notebook快捷键
+
+![image-20260215010223249](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215010223496.png)
+
+### 2. Matplotlib
+
+![image-20260215012719567](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215012719849.png)
+
+```python
+# 导入模块
+import matplotlib.pyplot as plt
+
+# 传入x和y, 通过plot画图
+plt.plot([1, 0, 9], [4, 5, 6])
+
+# 在执行程序的时候展示图形
+plt.show()
+```
+
+![output](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215023610572.png)
+
+#### 2.1 折线图
+
+```python
+# 1. 绘制基本的折线图
+from matplotlib import pyplot as plt
+
+x = range(1, 8)  # x轴的位置
+y = [17, 17, 18, 15, 11, 11, 13]
+# 传入x和y, 通过plot画折线图
+plt.plot(x, y)
+plt.show()
+```
+
+![output1](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215023701605.png)
+
+```python
+# 2. 折线的颜色和形状设置、折点的样式
+"""
+color='red' : 折线的颜色
+alpha=0.5	: 折线的透明度(0-1) 
+linestyle='--' : 折线的样式
+linewidth=3		: 折线的宽度—粗细
+marker :折点样式
+"""
+x = range(1, 8)  # x轴的位置
+y = [17, 17, 18, 15, 11, 11, 13]
+# 传入x和y, 通过plot画折线图
+plt.plot(x, y, color='red', alpha=0.3, linestyle='--', linewidth=3, marker='o')
+plt.show()
+```
+
+![output2](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215023923449.png)
+
+#### 2.2 设置保存图片
+
+```python
+from matplotlib import pyplot as plt
+import random
+
+x = range(2, 26, 2)  # x轴的位置
+y = [random.randint(15, 30) for i in x]
+
+# 设置图片的大小
+'''
+figsize:指定figure的宽和高，单位为英寸；                                                                     dpi参数指定绘图对象的分辨率，即每英寸多少个像素，缺省值为80，1英寸等于2.5cm,A4纸是 21*30cm的纸张
+'''
+# 设置画布对象，figsize中对应的单位是英寸，dpi是每英寸有多少像素点
+plt.figure(figsize=(20, 8), dpi=80)
+
+plt.plot(x, y)  # 传入x和y, 通过plot画图
+#plt.show() 
+#  保存(注意：要放在绘制的下面,并且plt.show()会释放figure资源，如果在显示图像之后保存图片将只能保存空图片。)
+# plt.savefig('./t1.png') 
+#保存矢量图
+plt.savefig('./t1.svg')
+```
+
+![output3](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215023928103.png)
+
+#### 2.3 设置x轴与y轴刻度
+
+```python
+from matplotlib import pyplot as plt
+
+x = range(2, 26, 2)  # x轴的位置
+y = [random.randint(15, 30) for i in x]
+plt.figure(figsize=(20, 8), dpi=80)
+
+# 设置x轴和y轴刻度的API
+# plt.xticks(x)
+# plt.xticks(range(1,25)) # 设置x轴的刻度
+# plt.yticks(y)
+# plt.yticks(range(min(y),max(y)+1))
+
+
+# 构造x轴刻度标签
+x_ticks_label = ["{}:00".format(i) for i in x]
+# rotation = 45 # 让字旋转45度
+plt.xticks(x, x_ticks_label, rotation=45)
+# 设置y轴的刻度标签
+y_ticks_label = ["{}℃".format(i) for i in range(min(y), max(y) + 1)]
+plt.yticks(range(min(y), max(y) + 1), y_ticks_label)
+
+plt.plot(x, y)
+plt.show()
+```
+
+![output4](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024006084.png)
+
+#### 2.4 设置显示中文
+
+```python
+from matplotlib import pyplot as plt
+from matplotlib import font_manager
+
+x = range(2, 26, 2)  # x轴的位置
+y = [random.randint(15, 30) for i in x]
+plt.figure(figsize=(20, 8), dpi=80)
+
+# 构造x轴刻度标签
+x_ticks_label = ["{}:00".format(i) for i in x]
+# rotation = 45 # 让字旋转45度
+plt.xticks(x, x_ticks_label, rotation=45)
+# 设置y轴的刻度标签
+y_ticks_label = ["{}℃".format(i) for i in range(min(y), max(y) + 1)]
+plt.yticks(range(min(y), max(y) + 1), y_ticks_label)
+
+# 设置坐标轴标签与字体样式
+my_font = font_manager.FontProperties(fname='C:\\Windows\\Fonts\\STSONG.TTF', size=18)
+# 下面是mac电脑的
+# my_font = font_manager.FontProperties(
+#     fname='/System/Library/Fonts/PingFang.ttc',
+#     size=18
+# )
+plt.title('上海天气', fontproperties=my_font)
+plt.xlabel('时间', fontproperties=my_font)
+plt.ylabel('温度', fontproperties=my_font)
+
+plt.plot(x, y)
+plt.show()
+```
+
+![output5](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024037832.png)
+
+#### 2.5 一图多线
+
+```python
+from matplotlib import pyplot as plt
+from matplotlib import font_manager
+
+y1 = [1, 0, 1, 1, 2, 4, 3, 4, 4, 5, 6, 5, 4, 3, 3, 1, 1, 1, 1, 1]
+y2 = [1, 0, 3, 1, 2, 2, 3, 4, 3, 2, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1]
+x = range(11, 31)
+plt.figure(figsize=(20, 8), dpi=80)
+
+plt.plot(x, y1, color='red', alpha=1, linestyle='-', linewidth=2, label='小王')
+plt.plot(x, y2, color='blue', alpha=1, linestyle='-', linewidth=2, label='小张')
+# 引入字体
+my_font = font_manager.FontProperties(fname='c:\\windows\\fonts\\msyh.ttc', size=16)
+# 
+# 设置刻度
+xtick_labels = ['{}岁'.format(i) for i in x]
+plt.xticks(x, xtick_labels, fontproperties=my_font, rotation=45)
+# 添加图例
+plt.legend(prop=my_font)
+plt.grid(alpha=0.4)
+
+plt.show()
+```
+
+![output6](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024110520.png)
+
+#### 2.6 一个画布多个子图
+
+**第一种方式：**
+
+```python
+import matplotlib.pyplot as plt
+# 引入numpy, 需要先安装numpy的包
+import numpy as np
+
+# 设置x的值为1到99
+x = np.arange(1, 100)
+
+# 创建父图，设置画布
+fig, axes = plt.subplots(2, 2, figsize=(20, 10), dpi=80)
+ax1 = axes[0, 0]
+ax2 = axes[0, 1]
+ax3 = axes[1, 0]
+ax4 = axes[1, 1]
+
+# 子图1
+ax1.plot(x, x)
+
+# 子图2
+ax2.plot(x, -x)
+
+# 子图3
+ax3.plot(x, x ** 2)
+
+# 子图4
+ax4.plot(x, np.log(x))
+
+plt.show()
+```
+
+![output7](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024139463.png)
+
+**第二种方式：**
+
+```python
+# 第二种方式
+# 使用 plt.subplot() 添加子图
+
+import matplotlib.pyplot as plt
+import numpy as np
+
+x = np.arange(1, 100)
+plt.figure(figsize=(20, 10), dpi=80)
+# 创建子图
+# 2,2,1 ==> 两行两列，放在第一个位置
+plt.subplot(2, 2, 1)
+plt.plot(x, x)
+
+plt.subplot(2, 2, 2)
+plt.plot(x, -x)
+
+plt.subplot(2, 2, 3)
+plt.plot(x, x ** 2)
+
+plt.subplot(2, 2, 4)
+plt.plot(x, np.log(x))
+
+plt.show()
+```
+
+![output8](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024221584.png)
+
+#### 2.7 散点图
+
+```python
+'''
+题干:3月份每天最高气温
+a = [11,17,16,11,12,11,12,6,6,7,8,9,12,15,14,17,18,21,16,17,20,14,15,15,15,19,21,22,22,22,23]
+'''
+
+from matplotlib import pyplot as plt
+from matplotlib import font_manager
+
+y = [11, 17, 16, 11, 12, 11, 12, 6, 6, 7, 8, 9, 12, 15, 14, 17, 18, 21, 16, 17, 20, 14, 15, 15, 15, 19, 21, 22, 22, 22,
+     23]
+x = range(1, 32)
+
+# 设置图形大小
+plt.figure(figsize=(20, 8), dpi=80)
+
+# 使用scatter绘制散点图
+plt.scatter(x, y, label='3月份')
+
+# 调整x轴的刻度
+my_font = font_manager.FontProperties(fname='c:\\windows\\fonts\\msyh.ttc', size=16)
+
+xticks_labels = ['3月{}日'.format(i) for i in x]
+plt.xticks(x[::3], xticks_labels[::3], fontproperties=my_font, rotation=45)
+
+# 设置坐标轴标签
+plt.xlabel(' 日 期 ', fontproperties=my_font)
+plt.ylabel('温度', fontproperties=my_font)
+# 设置图例
+plt.legend(prop=my_font)
+
+plt.show()
+```
+
+![output9](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024252745.png)
+
+#### 2.8 柱状图
+
+```python
+import matplotlib.pyplot as plt
+from matplotlib import font_manager
+
+a = ['流浪地球', '疯狂的外星人', '飞驰人生', '大黄蜂', '熊出没·原始时代', '新喜剧之王']
+b = [38.13, 19.85, 14.89, 11.36, 6.47, 5.93]
+
+# 引入字体
+my_font = font_manager.FontProperties(fname='c:\\windows\\fonts\\msyh.ttc', size=16)
+
+# 绘制画布
+plt.figure(figsize=(20, 8), dpi=80)
+
+# 绘制条形图
+rects = plt.bar(range(len(b)), b, width=0.3, color='r')
+
+# 绘制x轴标签
+plt.xticks(range(len(a)), a, fontproperties=my_font, rotation=45)
+
+# 给条形图添加标签
+for rect in rects:
+    height = rect.get_height()
+    plt.text(rect.get_x() + rect.get_width() / 2, height + 0.3, str(height), ha='center')
+
+plt.show()
+```
+
+![output10](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024316460.png)
+
+#### 2.9 直方图
+
+```python
+time = [131, 98, 125, 131, 124, 139, 131, 117, 128, 108, 135, 138, 131, 102, 107, 114, 119, 128, 121, 142, 127, 130,
+        124, 101, 110, 116, 117, 110, 128, 128, 115, 99, 136, 126, 134, 95, 138, 117, 111, 78, 132, 124, 113, 150, 110,
+        117, 86, 95, 144, 105, 126, 130, 126, 130, 126, 116, 123, 106, 112, 138, 123, 86, 101, 99, 136, 123, 117, 119,
+        105, 137, 123, 128, 125, 104, 109, 134, 125, 127, 105, 120, 107, 129, 116, 108, 132, 103, 136, 118, 102, 120,
+        114, 105, 115, 132, 145, 119, 121, 112, 139, 125, 138, 109, 132, 134, 156, 106, 117, 127, 144, 139, 139, 119,
+        140, 83, 110, 102, 123, 107, 143, 115, 136, 118, 139, 123, 112, 118, 125, 109, 119, 133, 112, 114, 122, 109,
+        106, 123, 116, 131, 127, 115, 118, 112, 135, 115, 146, 137, 116, 103, 144, 83, 123, 111, 110, 111, 100, 154,
+        136, 100, 118, 119, 133, 134, 106, 129, 126, 110, 111, 109, 141, 120, 117, 106, 149, 122, 122, 110, 118, 127,
+        121, 114, 125, 126, 114, 140, 103, 130, 141, 117, 106, 114, 121, 114, 133, 137, 92, 121, 112, 146, 97, 137, 105,
+        98, 117, 112, 81, 97, 139, 113, 134, 106, 144, 110, 137, 137, 111, 104, 117, 100, 111, 101, 110, 105, 129, 137,
+        112, 120, 113, 133, 112, 83, 94, 146, 133, 101, 131, 116, 111, 84, 137, 115, 122, 106, 144, 109, 123, 116, 111,
+        111, 133, 150]
+
+import matplotlib.pyplot as plt
+
+# 画布
+plt.figure(figsize=(20, 8), dpi=80)
+
+print((max(time) - min(time)) / 20)
+# 绘制直方图
+# bins=20 表示将数据分为20个区间，也就是20组，当然，这个数据也可以计算出来
+plt.hist(time, bins=20, color='green')
+
+# 添加x轴标签
+plt.xlabel('播放时长', fontproperties=my_font)
+# 添加y轴标签
+plt.ylabel('电影数目', fontproperties=my_font)
+
+# 修改x轴刻度显示
+plt.xticks(range(min(time), max(time) + 1, 4), [str(i) + '分钟' for i in range(min(time), max(time) + 1, 4)],
+           fontproperties=my_font, rotation=45)
+
+plt.show()
+```
+
+![output11](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024353935.png)
+
+#### 2.10 饼状图
+
+```python
+"""
+参数解释:
+    explode： 设置各部分突出多少
+    label: 设置各部分标签
+    labeldistance:设置标签文本距圆心位置，1.1表示1.1倍半径
+    autopct：设置圆内文本
+    shadow：设置是否有阴影
+    startangle：起始角度，默认从0开始逆时针转
+    pctdistance：设置圆内文本距圆心距离返回值
+"""
+
+import matplotlib.pyplot as plt
+import matplotlib
+
+label_list = ["第一部分", "第二部分", "第三部分"]  # 各部分标签
+size = [55, 35, 10]  # 各部分大小
+color = ["red", "green", "blue"]  # 各部分颜色
+explode = [0, 0.05, 0]  # 各部分突出值
+
+#设置汉字显示
+matplotlib.rcParams['font.sans-serif'] = ['SimHei']
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+plt.pie(size, explode=explode, colors=color, labels=label_list, labeldistance=1.1, autopct="%1.1f%%", shadow=True,
+        startangle=90, pctdistance=0.6)
+
+plt.axis("equal")  # 设置横轴和纵轴大小相等，这样饼才是圆的
+plt.show()
+```
+
+![output12](https://gitee.com/rozen_gitee/typora-img/raw/master/img/20260215024412225.png)
+
+### 3. format()方法
+
+**语法：=="字{}符{}串".format(参数1, 参数2)==**
+
+将参数按位置填到`{}`中
+
+可使用元组：
+
+```python
+data = (5, 10)
+"现在时间是：{}:{}".format(*data)  # 对元组进行拆包传参
+```
+
